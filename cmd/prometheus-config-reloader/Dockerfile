@@ -1,15 +1,5 @@
 ARG ARCH="amd64"
 ARG OS="linux"
-FROM quay.io/prometheus/busybox-${OS}-${ARCH}:latest
-
-COPY prometheus-config-reloader /bin/prometheus-config-reloader
-
-USER nobody
-
-ENTRYPOINT ["/bin/prometheus-config-reloader"]
-
-ARG ARCH="amd64"
-ARG OS="linux"
 
 # Build the manager binary
 FROM golang:1.20.3-alpine as builder
