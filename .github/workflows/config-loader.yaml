@@ -60,5 +60,5 @@ jobs:
             ${{ env.REGISTRY }}/${{ matrix.image }}:latest
       - name: Test ${{ matrix.name }}
         run: |
-          docker pull ${{ env.REGISTRY }}/${{ matrix.image}}:${{steps.git-branch.outputs.git-branch}}
-          docker image inspect ${{ env.REGISTRY }}/${{ matrix.image}}:${{steps.git-branch.outputs.git-branch}}
+          docker pull ${{ env.REGISTRY }}/${{ matrix.image}}:v0.60.3
+          docker image inspect ${{ env.REGISTRY }}/${{ matrix.image}}:v0.60.3
