@@ -15,12 +15,13 @@ COPY internal/ internal/
 COPY vendor/ vendor/
 
 # Build
-RUN CGO_ENABLED=0 GOOS=${OS} GOARCH=${ARCH} go build -ldflags "-linkmode external -extldflags -static" -o prometheus-config-reloader ./cmd/prometheus-config-reloader/
+RUN CGO_ENABLED=0 GOOS=${OS} GOARCH=${ARCH} go build -ldflags "-linkmode external -extldflags -static" -o operator ./cmd/operator/
 
 FROM quay.io/prometheus/busybox-${OS}-${ARCH}:latest
 
-COPY --from=builder /workspace/prometheus-config-reloader /bin/prometheus-config-reloader
+COPY --from=builder /workspace/operator /bin/operator
 
-USER nobody
+USER 65534
 
-ENTRYPOINT ["/bin/prometheus-config-reloader"]
+ENTRYPOINT ["/bin/operator"]
+
