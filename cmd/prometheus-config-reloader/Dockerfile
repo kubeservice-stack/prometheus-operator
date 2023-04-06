@@ -11,7 +11,8 @@ COPY go.sum go.sum
 COPY cmd/ cmd/
 COPY pkg/ pkg/
 
-RUN go mod download
+RUN go mod tidy
+RUN go mod vendor
 
 # Build
 RUN CGO_ENABLED=0 GOOS=${OS} GOARCH=${ARCH} go build -ldflags "-linkmode external -extldflags -static" -o prometheus-config-reloader ./cmd/prometheus-config-reloader/
