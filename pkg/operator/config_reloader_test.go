@@ -29,7 +29,6 @@ var reloaderConfig = ContainerConfig{
 	MemoryRequest: "50Mi",
 	MemoryLimit:   "50Mi",
 	Image:         "quay.io/prometheus-operator/prometheus-config-reloader:latest",
-	EnableProbes:  false,
 }
 
 func TestCreateConfigReloaderEnableProbes(t *testing.T) {
@@ -53,11 +52,11 @@ func TestCreateConfigReloaderEnableProbes(t *testing.T) {
 	}
 
 	if container.LivenessProbe == nil {
-		t.Errorf("Expected LivenessProbe %s, but not found", container.LivenessProbe)
+		t.Errorf("expected LivenessProbe but got none")
 	}
 
 	if container.ReadinessProbe == nil {
-		t.Errorf("Expected ReadinessProbe %s, but not found", container.ReadinessProbe)
+		t.Errorf("expected ReadinessProbe but got none")
 	}
 }
 
@@ -81,11 +80,11 @@ func TestCreateInitConfigReloaderEnableProbes(t *testing.T) {
 	}
 
 	if container.LivenessProbe != nil {
-		t.Errorf("Expected LivenessProbe %v, but found %s", nil, container.LivenessProbe)
+		t.Errorf("expected no LivenessProbe but got %v", container.LivenessProbe)
 	}
 
 	if container.ReadinessProbe != nil {
-		t.Errorf("Expected ReadinessProbe %v, but found %s", nil, container.ReadinessProbe)
+		t.Errorf("expected no ReadinessProbe but got %v", container.ReadinessProbe)
 	}
 }
 
@@ -109,11 +108,11 @@ func TestCreateInitConfigReloader(t *testing.T) {
 	}
 
 	if container.LivenessProbe != nil {
-		t.Errorf("Expected LivenessProbe %v, but found %s", nil, container.LivenessProbe)
+		t.Errorf("expected no LivenessProbe but got %v", container.LivenessProbe)
 	}
 
 	if container.ReadinessProbe != nil {
-		t.Errorf("Expected ReadinessProbe %v, but found %s", nil, container.ReadinessProbe)
+		t.Errorf("expected no ReadinessProbe but got %v", container.ReadinessProbe)
 	}
 }
 
@@ -186,11 +185,11 @@ func TestCreateConfigReloader(t *testing.T) {
 	}
 
 	if container.LivenessProbe != nil {
-		t.Errorf("Expected LivenessProbe %v, but found %s", nil, container.LivenessProbe)
+		t.Errorf("expected no LivenessProbe but got %v", container.LivenessProbe)
 	}
 
 	if container.ReadinessProbe != nil {
-		t.Errorf("Expected ReadinessProbe %v, but found %s", nil, container.ReadinessProbe)
+		t.Errorf("expected no ReadinessProbe but got %v", container.ReadinessProbe)
 	}
 }
 
