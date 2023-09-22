@@ -1,11 +1,13 @@
 name: e2e
 on:
+  workflow_dispatch:
   pull_request:
   push:
     branches:
       - 'release-*'
       - 'master'
       - 'main'
+      - 'local-test'
     tags:
       - 'v*'
 jobs:
