@@ -2302,11 +2302,13 @@ func testAMWeb(t *testing.T) {
 		amPods, err := kubeClient.CoreV1().Pods(ns).List(ctx, metav1.ListOptions{})
 		if err != nil {
 			pollErr = err
+			t.Log(pollErr)
 			return false, nil
 		}
 
 		if len(amPods.Items) == 0 {
 			pollErr = fmt.Errorf("No alertmanager pods found in namespace %s", ns)
+			t.Log(pollErr)
 			return false, nil
 		}
 
@@ -2337,6 +2339,7 @@ func testAMWeb(t *testing.T) {
 		err = http2.ConfigureTransport(transport)
 		if err != nil {
 			pollErr = err
+			t.Log(pollErr)
 			return false, nil
 		}
 
@@ -2347,23 +2350,27 @@ func testAMWeb(t *testing.T) {
 		req, err := http.NewRequestWithContext(ctx, "GET", "https://localhost:9093", nil)
 		if err != nil {
 			pollErr = err
+			t.Log(pollErr)
 			return false, nil
 		}
 
 		respNew, err := httpClient.Do(req)
 		if err != nil {
 			pollErr = err
+			t.Log(pollErr)
 			return false, nil
 		}
 
 		receivedCertBytesNew, err := certutil.EncodeCertificates(respNew.TLS.PeerCertificates...)
 		if err != nil {
 			pollErr = err
+			t.Log(pollErr)
 			return false, nil
 		}
 
 		if !bytes.Equal(receivedCertBytesNew, certBytesNew) {
 			pollErr = fmt.Errorf("certificate received from alertmanager instance does not match the one which is configured after certificate renewal")
+			t.Log(pollErr)
 			return false, nil
 		}
 
