@@ -3857,7 +3857,7 @@ func testPromWebWithThanosSidecar(t *testing.T) {
 			return false, nil
 		}
 
-		thanosSidecarPrometheusUp, err := framework.GetMetricVal(context.Background(), ns, podName, "10902", "thanos_sidecar_prometheus_up", "https")
+		thanosSidecarPrometheusUp, err := framework.GetMetricVal(context.Background(), ns, podName, "10902", "thanos_sidecar_prometheus_up", "http")
 		if err != nil {
 			pollErr = err
 			return false, nil
