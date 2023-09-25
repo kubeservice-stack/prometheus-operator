@@ -2188,6 +2188,7 @@ func testAMWeb(t *testing.T) {
 			return false, nil
 		}
 
+		t.Log(amPods.Items)
 		if len(amPods.Items) == 0 {
 			pollErr = fmt.Errorf("No alertmanager pods found in namespace %s", ns)
 			t.Log(pollErr)
@@ -2280,7 +2281,7 @@ func testAMWeb(t *testing.T) {
 			}
 		}
 
-		reloadSuccessTimestamp, err := framework.GetMetricVal(context.Background(), ns, podName, "8080", "reloader_last_reload_success_timestamp_seconds")
+		reloadSuccessTimestamp, err := framework.GetMetricVal(context.Background(), ns, podName, "8080", "reloader_last_reload_success_timestamp_seconds", "https")
 		if err != nil {
 			pollErr = err
 			t.Log(pollErr)
