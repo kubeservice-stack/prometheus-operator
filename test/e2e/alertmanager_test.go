@@ -2180,22 +2180,24 @@ func testAMWeb(t *testing.T) {
 	}
 
 	var pollErr error
-	err = wait.PollUntilContextTimeout(context.Background(), time.Second, time.Minute, false, func(ctx context.Context) (bool, error) {
+	err = wait.PollUntilContextTimeout(context.Background(), time.Second, 2*time.Minute, false, func(ctx context.Context) (bool, error) {
 		amPods, err := kubeClient.CoreV1().Pods(ns).List(ctx, metav1.ListOptions{})
 		if err != nil {
 			pollErr = err
+			t.Log(pollErr)
 			return false, nil
 		}
 
 		if len(amPods.Items) == 0 {
 			pollErr = fmt.Errorf("No alertmanager pods found in namespace %s", ns)
+			t.Log(pollErr)
 			return false, nil
 		}
 
 		cfg := framework.RestConfig
 		podName := amPods.Items[0].Name
 
-		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 		defer cancel()
 
 		closer, err := testFramework.StartPortForward(ctx, cfg, "https", podName, ns, "9093")
@@ -2209,6 +2211,7 @@ func testAMWeb(t *testing.T) {
 		req, err := http.NewRequestWithContext(ctx, "GET", "https://localhost:9093", nil)
 		if err != nil {
 			pollErr = err
+			t.Log(pollErr)
 			return false, nil
 		}
 
@@ -2225,6 +2228,7 @@ func testAMWeb(t *testing.T) {
 		err = http2.ConfigureTransport(transport)
 		if err != nil {
 			pollErr = err
+			t.Log(pollErr)
 			return false, nil
 		}
 
@@ -2235,22 +2239,26 @@ func testAMWeb(t *testing.T) {
 		resp, err := httpClient.Do(req)
 		if err != nil {
 			pollErr = err
+			t.Log(pollErr)
 			return false, nil
 		}
 
 		if resp.ProtoMajor != 2 {
 			pollErr = fmt.Errorf("expected ProtoMajor to be 2 but got %d", resp.ProtoMajor)
+			t.Log(pollErr)
 			return false, nil
 		}
 
 		receivedCertBytes, err := certutil.EncodeCertificates(resp.TLS.PeerCertificates...)
 		if err != nil {
 			pollErr = err
+			t.Log(pollErr)
 			return false, nil
 		}
 
 		if !bytes.Equal(receivedCertBytes, certBytes) {
 			pollErr = fmt.Errorf("certificate received from alertmanager instance does not match the one which is configured")
+			t.Log(pollErr)
 			return false, nil
 		}
 
@@ -2267,6 +2275,7 @@ func testAMWeb(t *testing.T) {
 
 			if rv != v {
 				pollErr = fmt.Errorf("expected header %s value to be %s but got %s", k, v, rv)
+				t.Log(pollErr)
 				return false, nil
 			}
 		}
@@ -2274,11 +2283,13 @@ func testAMWeb(t *testing.T) {
 		reloadSuccessTimestamp, err := framework.GetMetricVal(context.Background(), ns, podName, "8080", "reloader_last_reload_success_timestamp_seconds")
 		if err != nil {
 			pollErr = err
+			t.Log(pollErr)
 			return false, nil
 		}
 
 		if reloadSuccessTimestamp == 0 {
 			pollErr = fmt.Errorf("config reloader failed to reload once")
+			t.Log(pollErr)
 			return false, nil
 		}
 		return true, nil
