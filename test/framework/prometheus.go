@@ -313,7 +313,7 @@ func (f *Framework) CreatePrometheusAndWaitUntilReady(ctx context.Context, ns st
 	}
 
 	if err := f.WaitForPrometheusReady(ctx, result, 5*time.Minute); err != nil {
-		return nil, fmt.Errorf("waiting for %v Prometheus instances timed out (%v): %v", p.Spec.Replicas, p.Name, err)
+		return nil, fmt.Errorf("waiting for %v Prometheus instances timed out (%v) (%v): %v", p.Spec.Replicas, p.Name, p.Spec.Image, err)
 	}
 
 	return result, nil
