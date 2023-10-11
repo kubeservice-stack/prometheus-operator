@@ -7,7 +7,7 @@ on:
       - 'release-*'
       - 'master'
       - 'main'
-      - 'local-test'
+      - 'scrape_protocols_local_test'
     tags:
       - 'v*'
 jobs:
