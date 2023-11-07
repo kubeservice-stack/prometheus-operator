@@ -2426,7 +2426,7 @@ func testAMConfigReloaderWebConfig(t *testing.T) {
 	ns := framework.CreateNamespace(context.Background(), t, testCtx)
 	framework.SetupPrometheusRBAC(context.Background(), t, testCtx, ns)
 
-	name := "am-config-reloader-web-tls"
+	name := "am-web-tls"
 
 	host := fmt.Sprintf("%s.%s.svc", name, ns)
 	certBytes, keyBytes, err := certutil.GenerateSelfSignedCertKey(host, nil, nil)
@@ -2435,24 +2435,24 @@ func testAMConfigReloaderWebConfig(t *testing.T) {
 	}
 
 	kubeClient := framework.KubeClient
-	if err := framework.CreateOrUpdateSecretWithCert(context.Background(), certBytes, keyBytes, ns, "config-reloader-web-tls"); err != nil {
+	if err := framework.CreateOrUpdateSecretWithCert(context.Background(), certBytes, keyBytes, ns, "web-tls"); err != nil {
 		t.Fatal(err)
 	}
 
 	am := framework.MakeBasicAlertmanager(ns, name, 1)
-	am.Spec.WebConfigReloader = &monitoringv1.AlertmanagerConfigReloaderWebSpec{
+	am.Spec.Web = &monitoringv1.AlertmanagerWebSpec{
 		WebConfigFileFields: monitoringv1.WebConfigFileFields{
 			TLSConfig: &monitoringv1.WebTLSConfig{
 				KeySecret: v1.SecretKeySelector{
 					LocalObjectReference: v1.LocalObjectReference{
-						Name: "config-reloader-web-tls",
+						Name: "web-tls",
 					},
 					Key: "tls.key",
 				},
 				Cert: monitoringv1.SecretOrConfigMap{
 					Secret: &v1.SecretKeySelector{
 						LocalObjectReference: v1.LocalObjectReference{
-							Name: "config-reloader-web-tls",
+							Name: "web-tls",
 						},
 						Key: "tls.crt",
 					},
@@ -2470,19 +2470,19 @@ func testAMConfigReloaderWebConfig(t *testing.T) {
 			},
 		},
 	}
-	am.Spec.Web = &monitoringv1.AlertmanagerWebSpec{
+	am.Spec.WebConfigReloader = &monitoringv1.AlertmanagerConfigReloaderWebSpec{
 		WebConfigFileFields: monitoringv1.WebConfigFileFields{
 			TLSConfig: &monitoringv1.WebTLSConfig{
 				KeySecret: v1.SecretKeySelector{
 					LocalObjectReference: v1.LocalObjectReference{
-						Name: "config-reloader-web-tls",
+						Name: "web-tls",
 					},
 					Key: "tls.key",
 				},
 				Cert: monitoringv1.SecretOrConfigMap{
 					Secret: &v1.SecretKeySelector{
 						LocalObjectReference: v1.LocalObjectReference{
-							Name: "config-reloader-web-tls",
+							Name: "web-tls",
 						},
 						Key: "tls.crt",
 					},
@@ -2537,6 +2537,11 @@ func testAMConfigReloaderWebConfig(t *testing.T) {
 			return false, nil
 		}
 
+		// The alertmanager certificate is issued to <pod>.<namespace>.svc,
+		// but port-forwarding is done through localhost.
+		// This is why we use an http client which skips the TLS verification.
+		// In the test we will verify the TLS certificate manually to make sure
+		// the alertmanager instance is configured properly.
 		transport := &http.Transport{
 			TLSClientConfig: &tls.Config{
 				InsecureSkipVerify: true,
@@ -2563,6 +2568,34 @@ func testAMConfigReloaderWebConfig(t *testing.T) {
 			return false, nil
 		}
 
+		receivedCertBytes, err := certutil.EncodeCertificates(resp.TLS.PeerCertificates...)
+		if err != nil {
+			pollErr = err
+			return false, nil
+		}
+
+		if !bytes.Equal(receivedCertBytes, certBytes) {
+			pollErr = fmt.Errorf("certificate received from alertmanager instance does not match the one which is configured")
+			return false, nil
+		}
+
+		expectedHeaders := map[string]string{
+			"Content-Security-Policy":   "default-src 'self'",
+			"X-Frame-Options":           "deny",
+			"X-Content-Type-Options":    "nosniff",
+			"X-XSS-Protection":          "1; mode=block",
+			"Strict-Transport-Security": "max-age=31536000; includeSubDomains",
+		}
+
+		for k, v := range expectedHeaders {
+			rv := resp.Header.Get(k)
+
+			if rv != v {
+				pollErr = fmt.Errorf("expected header %s value to be %s but got %s", k, v, rv)
+				return false, nil
+			}
+		}
+
 		reloadSuccessTimestamp, err := framework.GetMetricVal(context.Background(), "https", ns, podName, "8080", "reloader_last_reload_success_timestamp_seconds")
 		if err != nil {
 			pollErr = err
@@ -2586,7 +2619,7 @@ func testAMConfigReloaderWebConfig(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if err = framework.CreateOrUpdateSecretWithCert(context.Background(), certBytesNew, keyBytesNew, ns, "config-reloader-web-tls"); err != nil {
+	if err = framework.CreateOrUpdateSecretWithCert(context.Background(), certBytesNew, keyBytesNew, ns, "web-tls"); err != nil {
 		t.Fatal(err)
 	}
 
@@ -2616,6 +2649,11 @@ func testAMConfigReloaderWebConfig(t *testing.T) {
 		}
 		defer closer()
 
+		// The alertmanager certificate is issued to <pod>.<namespace>.svc,
+		// but port-forwarding is done through localhost.
+		// This is why we use an http client which skips the TLS verification.
+		// In the test we will verify the TLS certificate manually to make sure
+		// the alertmanager instance is configured properly.
 		transport := &http.Transport{
 			TLSClientConfig: &tls.Config{
 				InsecureSkipVerify: true,
@@ -2643,21 +2681,17 @@ func testAMConfigReloaderWebConfig(t *testing.T) {
 			return false, nil
 		}
 
-		if respNew.ProtoMajor != 2 {
-			pollErr = fmt.Errorf("expected ProtoMajor to be 2 but got %d", respNew.ProtoMajor)
-			return false, nil
-		}
-
-		reloadSuccessTimestamp, err := framework.GetMetricVal(context.Background(), "https", ns, podName, "8080", "reloader_last_reload_success_timestamp_seconds")
+		receivedCertBytesNew, err := certutil.EncodeCertificates(respNew.TLS.PeerCertificates...)
 		if err != nil {
 			pollErr = err
 			return false, nil
 		}
 
-		if reloadSuccessTimestamp == 0 {
-			pollErr = fmt.Errorf("config reloader failed to reload once")
+		if !bytes.Equal(receivedCertBytesNew, certBytesNew) {
+			pollErr = fmt.Errorf("certificate received from alertmanager instance does not match the one which is configured after certificate renewal")
 			return false, nil
 		}
+
 		return true, nil
 	})
 
