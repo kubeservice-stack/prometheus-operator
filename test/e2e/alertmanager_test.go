@@ -2616,14 +2616,6 @@ func testAMConfigReloaderWebConfig(t *testing.T) {
 		}
 		defer closer()
 
-		httpClient := http.Client{}
-
-		req, err := http.NewRequestWithContext(ctx, "GET", "https://localhost:9093", nil)
-		if err != nil {
-			pollErr = err
-			return false, nil
-		}
-
 		transport := &http.Transport{
 			TLSClientConfig: &tls.Config{
 				InsecureSkipVerify: true,
@@ -2637,6 +2629,12 @@ func testAMConfigReloaderWebConfig(t *testing.T) {
 
 		httpClient := http.Client{
 			Transport: transport,
+		}
+
+		req, err := http.NewRequestWithContext(ctx, "GET", "https://localhost:9093", nil)
+		if err != nil {
+			pollErr = err
+			return false, nil
 		}
 
 		respNew, err := httpClient.Do(req)
