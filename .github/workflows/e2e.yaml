@@ -6,6 +6,7 @@ on:
       - 'release-*'
       - 'master'
       - 'main'
+      - 'local-e2e-unittest-crds'
     tags:
       - 'v*'
 jobs:
