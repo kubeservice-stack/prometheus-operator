@@ -2470,6 +2470,36 @@ func testAMConfigReloaderWebConfig(t *testing.T) {
 			},
 		},
 	}
+	am.Spec.Web = &monitoringv1.AlertmanagerWebSpec{
+		WebConfigFileFields: monitoringv1.WebConfigFileFields{
+			TLSConfig: &monitoringv1.WebTLSConfig{
+				KeySecret: v1.SecretKeySelector{
+					LocalObjectReference: v1.LocalObjectReference{
+						Name: "web-tls",
+					},
+					Key: "tls.key",
+				},
+				Cert: monitoringv1.SecretOrConfigMap{
+					Secret: &v1.SecretKeySelector{
+						LocalObjectReference: v1.LocalObjectReference{
+							Name: "web-tls",
+						},
+						Key: "tls.crt",
+					},
+				},
+			},
+			HTTPConfig: &monitoringv1.WebHTTPConfig{
+				HTTP2: &trueVal,
+				Headers: &monitoringv1.WebHTTPHeaders{
+					ContentSecurityPolicy:   "default-src 'self'",
+					XFrameOptions:           "Deny",
+					XContentTypeOptions:     "NoSniff",
+					XXSSProtection:          "1; mode=block",
+					StrictTransportSecurity: "max-age=31536000; includeSubDomains",
+				},
+			},
+		},
+	}
 	if _, err := framework.CreateAlertmanagerAndWaitUntilReady(context.Background(), am); err != nil {
 		t.Fatalf("Creating alertmanager failed: %v", err)
 	}
@@ -2493,7 +2523,7 @@ func testAMConfigReloaderWebConfig(t *testing.T) {
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer cancel()
 
-		closer, err := testFramework.StartPortForward(ctx, cfg, "http", podName, ns, "9093")
+		closer, err := testFramework.StartPortForward(ctx, cfg, "https", podName, ns, "9093")
 		if err != nil {
 			pollErr = fmt.Errorf("failed to start port forwarding: %v", err)
 			t.Log(pollErr)
@@ -2501,13 +2531,26 @@ func testAMConfigReloaderWebConfig(t *testing.T) {
 		}
 		defer closer()
 
-		req, err := http.NewRequestWithContext(ctx, "GET", "http://localhost:9093", nil)
+		req, err := http.NewRequestWithContext(ctx, "GET", "https://localhost:9093", nil)
 		if err != nil {
 			pollErr = err
 			return false, nil
 		}
 
-		httpClient := http.Client{}
+		transport := &http.Transport{
+			TLSClientConfig: &tls.Config{
+				InsecureSkipVerify: true,
+			},
+		}
+		err = http2.ConfigureTransport(transport)
+		if err != nil {
+			pollErr = err
+			return false, nil
+		}
+
+		httpClient := http.Client{
+			Transport: transport,
+		}
 
 		resp, err := httpClient.Do(req)
 		if err != nil {
@@ -2515,8 +2558,8 @@ func testAMConfigReloaderWebConfig(t *testing.T) {
 			return false, nil
 		}
 
-		if resp.ProtoMajor != 1 {
-			pollErr = fmt.Errorf("expected ProtoMajor to be 1 but got %d", resp.ProtoMajor)
+		if resp.ProtoMajor != 2 {
+			pollErr = fmt.Errorf("expected ProtoMajor to be 2 but got %d", resp.ProtoMajor)
 			return false, nil
 		}
 
@@ -2565,7 +2608,7 @@ func testAMConfigReloaderWebConfig(t *testing.T) {
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer cancel()
 
-		closer, err := testFramework.StartPortForward(ctx, cfg, "http", podName, ns, "9093")
+		closer, err := testFramework.StartPortForward(ctx, cfg, "https", podName, ns, "9093")
 		if err != nil {
 			pollErr = fmt.Errorf("failed to start port forwarding: %v", err)
 			t.Log(pollErr)
@@ -2575,10 +2618,25 @@ func testAMConfigReloaderWebConfig(t *testing.T) {
 
 		httpClient := http.Client{}
 
-		req, err := http.NewRequestWithContext(ctx, "GET", "http://localhost:9093", nil)
+		req, err := http.NewRequestWithContext(ctx, "GET", "https://localhost:9093", nil)
 		if err != nil {
 			pollErr = err
 			return false, nil
+		}
+
+		transport := &http.Transport{
+			TLSClientConfig: &tls.Config{
+				InsecureSkipVerify: true,
+			},
+		}
+		err = http2.ConfigureTransport(transport)
+		if err != nil {
+			pollErr = err
+			return false, nil
+		}
+
+		httpClient := http.Client{
+			Transport: transport,
 		}
 
 		respNew, err := httpClient.Do(req)
@@ -2587,8 +2645,8 @@ func testAMConfigReloaderWebConfig(t *testing.T) {
 			return false, nil
 		}
 
-		if respNew.ProtoMajor != 1 {
-			pollErr = fmt.Errorf("expected ProtoMajor to be 1 but got %d", respNew.ProtoMajor)
+		if respNew.ProtoMajor != 2 {
+			pollErr = fmt.Errorf("expected ProtoMajor to be 2 but got %d", respNew.ProtoMajor)
 			return false, nil
 		}
 
