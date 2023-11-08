@@ -2420,7 +2420,6 @@ func testAMWeb(t *testing.T) {
 }
 
 func testAMConfigReloaderWebConfig(t *testing.T) {
-	trueVal := true
 	testCtx := framework.NewTestCtx(t)
 	defer testCtx.Cleanup(t)
 	ns := framework.CreateNamespace(context.Background(), t, testCtx)
