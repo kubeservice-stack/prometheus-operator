@@ -2426,7 +2426,7 @@ func testAMConfigReloaderWebConfig(t *testing.T) {
 	ns := framework.CreateNamespace(context.Background(), t, testCtx)
 	framework.SetupPrometheusRBAC(context.Background(), t, testCtx, ns)
 
-	name := "am-web-tls"
+	name := "am-config-reloader-web-tls"
 
 	host := fmt.Sprintf("%s.%s.svc", name, ns)
 	certBytes, keyBytes, err := certutil.GenerateSelfSignedCertKey(host, nil, nil)
@@ -2436,6 +2436,10 @@ func testAMConfigReloaderWebConfig(t *testing.T) {
 
 	kubeClient := framework.KubeClient
 	if err := framework.CreateOrUpdateSecretWithCert(context.Background(), certBytes, keyBytes, ns, "web-tls"); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := framework.CreateOrUpdateSecretWithCert(context.Background(), certBytes, keyBytes, ns, "config-reloader-web-tls"); err != nil {
 		t.Fatal(err)
 	}
 
@@ -2475,14 +2479,14 @@ func testAMConfigReloaderWebConfig(t *testing.T) {
 			TLSConfig: &monitoringv1.WebTLSConfig{
 				KeySecret: v1.SecretKeySelector{
 					LocalObjectReference: v1.LocalObjectReference{
-						Name: "web-tls",
+						Name: "config-reloader-web-tls",
 					},
 					Key: "tls.key",
 				},
 				Cert: monitoringv1.SecretOrConfigMap{
 					Secret: &v1.SecretKeySelector{
 						LocalObjectReference: v1.LocalObjectReference{
-							Name: "web-tls",
+							Name: "config-reloader-web-tls",
 						},
 						Key: "tls.crt",
 					},
