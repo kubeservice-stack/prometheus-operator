@@ -2435,45 +2435,11 @@ func testAMConfigReloaderWebConfig(t *testing.T) {
 	}
 
 	kubeClient := framework.KubeClient
-	if err := framework.CreateOrUpdateSecretWithCert(context.Background(), certBytes, keyBytes, ns, "web-tls"); err != nil {
-		t.Fatal(err)
-	}
-
 	if err := framework.CreateOrUpdateSecretWithCert(context.Background(), certBytes, keyBytes, ns, "config-reloader-web-tls"); err != nil {
 		t.Fatal(err)
 	}
 
 	am := framework.MakeBasicAlertmanager(ns, name, 1)
-	am.Spec.Web = &monitoringv1.AlertmanagerWebSpec{
-		WebConfigFileFields: monitoringv1.WebConfigFileFields{
-			TLSConfig: &monitoringv1.WebTLSConfig{
-				KeySecret: v1.SecretKeySelector{
-					LocalObjectReference: v1.LocalObjectReference{
-						Name: "web-tls",
-					},
-					Key: "tls.key",
-				},
-				Cert: monitoringv1.SecretOrConfigMap{
-					Secret: &v1.SecretKeySelector{
-						LocalObjectReference: v1.LocalObjectReference{
-							Name: "web-tls",
-						},
-						Key: "tls.crt",
-					},
-				},
-			},
-			HTTPConfig: &monitoringv1.WebHTTPConfig{
-				HTTP2: &trueVal,
-				Headers: &monitoringv1.WebHTTPHeaders{
-					ContentSecurityPolicy:   "default-src 'self'",
-					XFrameOptions:           "Deny",
-					XContentTypeOptions:     "NoSniff",
-					XXSSProtection:          "1; mode=block",
-					StrictTransportSecurity: "max-age=31536000; includeSubDomains",
-				},
-			},
-		},
-	}
 	am.Spec.WebConfigReloader = &monitoringv1.AlertmanagerConfigReloaderWebSpec{
 		WebConfigFileFields: monitoringv1.WebConfigFileFields{
 			TLSConfig: &monitoringv1.WebTLSConfig{
@@ -2490,16 +2456,6 @@ func testAMConfigReloaderWebConfig(t *testing.T) {
 						},
 						Key: "tls.crt",
 					},
-				},
-			},
-			HTTPConfig: &monitoringv1.WebHTTPConfig{
-				HTTP2: &trueVal,
-				Headers: &monitoringv1.WebHTTPHeaders{
-					ContentSecurityPolicy:   "default-src 'self'",
-					XFrameOptions:           "Deny",
-					XContentTypeOptions:     "NoSniff",
-					XXSSProtection:          "1; mode=block",
-					StrictTransportSecurity: "max-age=31536000; includeSubDomains",
 				},
 			},
 		},
