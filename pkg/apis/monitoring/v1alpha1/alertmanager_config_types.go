@@ -82,6 +82,9 @@ type AlertmanagerConfigSpec struct {
 	// List of MuteTimeInterval specifying when the routes should be muted.
 	// +optional
 	MuteTimeIntervals []MuteTimeInterval `json:"muteTimeIntervals,omitempty"`
+	// Disallow the use of *File fields for AlertmanagerConfig CRDs.
+	// +optional
+	AllowLocalFileReferences *bool `json:"allowLocalFileReferences,omitempty"`
 }
 
 // Route defines a node in the routing tree.

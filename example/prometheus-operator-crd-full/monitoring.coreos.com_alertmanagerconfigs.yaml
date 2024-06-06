@@ -48,6 +48,10 @@ spec:
               By definition, the Alertmanager configuration only applies to alerts for which
               the `namespace` label is equal to the namespace of the AlertmanagerConfig resource.
             properties:
+              allowLocalFileReferences:
+                description: Disallow the use of *File fields for AlertmanagerConfig
+                  CRDs.
+                type: boolean
               inhibitRules:
                 description: |-
                   List of inhibition rules. The rules will only apply to alerts matching

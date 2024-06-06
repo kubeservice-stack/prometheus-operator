@@ -16067,6 +16067,18 @@ the resource&rsquo;s namespace.</p>
 <p>List of MuteTimeInterval specifying when the routes should be muted.</p>
 </td>
 </tr>
+<tr>
+<td>
+<code>allowLocalFileReferences</code><br/>
+<em>
+bool
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>Disallow the use of *File fields for AlertmanagerConfig CRDs.</p>
+</td>
+</tr>
 </table>
 </td>
 </tr>
@@ -18158,6 +18170,18 @@ the resource&rsquo;s namespace.</p>
 <td>
 <em>(Optional)</em>
 <p>List of MuteTimeInterval specifying when the routes should be muted.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>allowLocalFileReferences</code><br/>
+<em>
+bool
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>Disallow the use of *File fields for AlertmanagerConfig CRDs.</p>
 </td>
 </tr>
 </tbody>
