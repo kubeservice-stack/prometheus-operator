@@ -17,11 +17,14 @@ linters:
     - misspell
     - modernize
     - nilnesserr
+    - nolintlint
     - recvcheck
     - revive
     - sloglint
     - testifylint
     - unconvert
+    - unused
+    - whitespace
   settings:
     depguard:
       rules:
