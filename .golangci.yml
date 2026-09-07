@@ -99,6 +99,8 @@ linters:
     modernize:
       disable:
         - omitzero
+    nolintlint:
+      require-no-space: false
   exclusions:
     generated: strict
     presets:
